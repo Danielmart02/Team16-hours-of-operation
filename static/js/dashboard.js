@@ -2,25 +2,22 @@
 class DiningDashboard {
     constructor() {
         this.chart = null;
-        this.weatherOptions = [];
+        this.detailedChart = null;
         this.eventOptions = [];
+        this.currentPredictions = [];
+        this.selectedDate = null;
         this.init();
     }
 
     async init() {
-        await this.loadOptions();
+        await this.loadEventOptions();
         this.setupEventListeners();
         this.setDefaultDates();
-        await this.loadTodaySummary();
+        await this.loadTomorrowSummary();
     }
 
-    async loadOptions() {
+    async loadEventOptions() {
         try {
-            // Load weather options
-            const weatherResponse = await fetch('/api/weather-options');
-            this.weatherOptions = await weatherResponse.json();
-            this.populateSelect('weather-select', this.weatherOptions, 'sunny');
-
             // Load event options
             const eventResponse = await fetch('/api/event-options');
             this.eventOptions = await eventResponse.json();
@@ -68,20 +65,32 @@ class DiningDashboard {
 
     setupEventListeners() {
         document.getElementById('predict-btn').addEventListener('click', () => {
-            this.generatePredictions();
+            this.generateSimplePredictions();
+        });
+
+        document.getElementById('close-detailed').addEventListener('click', () => {
+            this.closeDetailedView();
+        });
+
+        document.getElementById('update-detailed').addEventListener('click', () => {
+            this.updateDetailedPrediction();
         });
 
         // Allow Enter key to trigger predictions
         document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.generatePredictions();
+            if (e.key === 'Enter' && !document.getElementById('detailed-analysis').classList.contains('hidden')) {
+                // If detailed view is open, update detailed prediction
+                this.updateDetailedPrediction();
+            } else if (e.key === 'Enter') {
+                // Otherwise, generate simple predictions
+                this.generateSimplePredictions();
             }
         });
     }
 
-    async loadTodaySummary() {
+    async loadTomorrowSummary() {
         try {
-            const response = await fetch('/api/today-summary');
+            const response = await fetch('/api/tomorrow-summary');
             const summary = await response.json();
 
             if (summary.error) {
@@ -91,22 +100,28 @@ class DiningDashboard {
             document.getElementById('workers-needed').textContent = summary.total_workers_needed;
             document.getElementById('people-expected').textContent = summary.people_expected.toLocaleString();
             document.getElementById('total-hours').textContent = `${summary.total_hours}h`;
+
+            // Show weather note if weather data was used
+            const weatherNote = document.getElementById('weather-note');
+            if (summary.weather_from_api) {
+                weatherNote.classList.remove('hidden');
+            } else {
+                weatherNote.classList.add('hidden');
+            }
         } catch (error) {
-            console.error('Error loading today summary:', error);
+            console.error('Error loading tomorrow summary:', error);
             document.getElementById('workers-needed').textContent = 'Error';
             document.getElementById('people-expected').textContent = 'Error';
             document.getElementById('total-hours').textContent = 'Error';
         }
     }
 
-    async generatePredictions() {
+    async generateSimplePredictions() {
         const startDate = document.getElementById('start-date').value;
         const endDate = document.getElementById('end-date').value;
-        const weather = document.getElementById('weather-select').value;
-        const event = document.getElementById('event-select').value;
 
-        if (!startDate || !endDate || !weather || !event) {
-            this.showError('Please fill in all fields');
+        if (!startDate || !endDate) {
+            this.showError('Please fill in both start and end dates');
             return;
         }
 
@@ -118,16 +133,14 @@ class DiningDashboard {
         this.showLoading(true);
 
         try {
-            const response = await fetch('/api/batch-predict', {
+            const response = await fetch('/api/simple-batch-predict', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     start_date: startDate,
-                    end_date: endDate,
-                    weather: weather,
-                    event: event
+                    end_date: endDate
                 })
             });
 
@@ -137,7 +150,11 @@ class DiningDashboard {
                 throw new Error(predictions.error);
             }
 
+            this.currentPredictions = predictions;
             this.updateChart(predictions);
+            
+            // Close detailed view if it's open
+            this.closeDetailedView();
         } catch (error) {
             console.error('Error generating predictions:', error);
             this.showError('Failed to generate predictions: ' + error.message);
@@ -216,7 +233,7 @@ class DiningDashboard {
                 plugins: {
                     title: {
                         display: true,
-                        text: `Staffing Predictions - ${this.formatOptionText(document.getElementById('weather-select').value)} Weather, ${this.formatOptionText(document.getElementById('event-select').value)}`,
+                        text: 'Staffing Predictions Overview (Date-Based Only)',
                         font: {
                             size: 16,
                             weight: 'bold'
@@ -243,23 +260,14 @@ class DiningDashboard {
                                 const index = tooltipItems[0].dataIndex;
                                 const prediction = predictions[index];
                                 return [
-                                    `Weather: ${dashboard.formatOptionText(prediction.weather)}`,
-                                    `Event: ${dashboard.formatOptionText(prediction.event)}`,
                                     `Expected Customers: ${prediction.predicted_transactions.toLocaleString()}`,
-                                    `Total Hours: ${prediction.total_predicted_hours}h`
+                                    `Total Hours: ${prediction.total_predicted_hours}h`,
+                                    '',
+                                    '🖱️ Click for detailed analysis with weather & events'
                                 ];
                             },
                             label: function(context) {
                                 return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}h`;
-                            },
-                            footer: function(tooltipItems) {
-                                const index = tooltipItems[0].dataIndex;
-                                const prediction = predictions[index];
-                                let totalWorkers = 0;
-                                Object.values(prediction.workers).forEach(hours => {
-                                    totalWorkers += Math.max(1, Math.round(hours / 8));
-                                });
-                                return `Estimated Workers Needed: ${totalWorkers}`;
                             }
                         }
                     }
@@ -267,9 +275,170 @@ class DiningDashboard {
                 interaction: {
                     mode: 'index',
                     intersect: false
+                },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const selectedPrediction = predictions[index];
+                        this.openDetailedView(selectedPrediction.date);
+                    }
                 }
             }
         });
+    }
+
+    async openDetailedView(date) {
+        this.selectedDate = date;
+        
+        // Update the detailed view header
+        const dateObj = new Date(date);
+        document.getElementById('detailed-date').textContent = 
+            dateObj.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+
+        // Reset event selection to default
+        document.getElementById('event-select').value = 'regular_day';
+
+        // Show the detailed analysis section
+        document.getElementById('detailed-analysis').classList.remove('hidden');
+        
+        // Scroll to the detailed section
+        document.getElementById('detailed-analysis').scrollIntoView({ 
+            behavior: 'smooth' 
+        });
+
+        // Load initial detailed prediction
+        await this.updateDetailedPrediction();
+    }
+
+    async updateDetailedPrediction() {
+        if (!this.selectedDate) return;
+
+        const event = document.getElementById('event-select').value;
+        
+        this.showLoading(true);
+
+        try {
+            const response = await fetch('/api/detailed-predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    date: this.selectedDate,
+                    event: event
+                })
+            });
+
+            const prediction = await response.json();
+
+            if (prediction.error) {
+                throw new Error(prediction.error);
+            }
+
+            this.updateDetailedView(prediction);
+        } catch (error) {
+            console.error('Error getting detailed prediction:', error);
+            this.showError('Failed to get detailed prediction: ' + error.message);
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    updateDetailedView(prediction) {
+        // Update info cards
+        document.getElementById('detailed-customers').textContent = 
+            prediction.predicted_transactions.toLocaleString();
+        document.getElementById('detailed-hours').textContent = 
+            `${prediction.total_predicted_hours}h`;
+        document.getElementById('detailed-weather').textContent = 
+            this.formatOptionText(prediction.weather);
+
+        // Show/hide weather note based on whether weather data came from API
+        const weatherNote = document.getElementById('detailed-weather-note');
+        if (prediction.weather_from_api) {
+            weatherNote.classList.remove('hidden');
+        } else {
+            weatherNote.classList.add('hidden');
+        }
+
+        // Update detailed chart
+        this.updateDetailedChart(prediction);
+    }
+
+    updateDetailedChart(prediction) {
+        const ctx = document.getElementById('detailed-chart').getContext('2d');
+
+        const workerTypes = Object.keys(prediction.workers);
+        const hours = Object.values(prediction.workers);
+        
+        const colors = [
+            '#FF6B6B',
+            '#4ECDC4',
+            '#45B7D1',
+            '#96CEB4',
+            '#FFEAA7',
+            '#DDA0DD'
+        ];
+
+        // Destroy existing detailed chart if it exists
+        if (this.detailedChart) {
+            this.detailedChart.destroy();
+        }
+
+        // Create detailed chart
+        this.detailedChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: workerTypes,
+                datasets: [{
+                    data: hours,
+                    backgroundColor: colors.slice(0, workerTypes.length),
+                    borderColor: colors.slice(0, workerTypes.length),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Detailed Analysis - ${this.formatOptionText(prediction.event)} ${prediction.weather_from_api ? '(Weather Included)' : ''}`,
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const hours = context.parsed;
+                                const workers = Math.max(1, Math.round(hours / 8));
+                                return `${context.label}: ${hours.toFixed(1)}h (≈${workers} workers)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    closeDetailedView() {
+        document.getElementById('detailed-analysis').classList.add('hidden');
+        this.selectedDate = null;
+        
+        if (this.detailedChart) {
+            this.detailedChart.destroy();
+            this.detailedChart = null;
+        }
     }
 
     showLoading(show) {
@@ -283,6 +452,15 @@ class DiningDashboard {
 
     showError(message) {
         alert('Error: ' + message);
+    }
+
+    // Helper method to check if a date is within 7 days from today
+    isWithinSevenDays(dateString) {
+        const today = new Date();
+        const targetDate = new Date(dateString);
+        const diffTime = targetDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 7;
     }
 }
 

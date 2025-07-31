@@ -20,7 +20,7 @@
 
         <!-- Quick Information Section -->
         <section class="quick-info">
-            <h2>Today's Quick Information</h2>
+            <h2>Tomorrow's Quick Information</h2>
             <div class="info-cards">
                 <div class="info-card">
                     <h3>Workers Needed</h3>
@@ -35,6 +35,10 @@
                     <div class="info-value" id="total-hours">Loading...</div>
                 </div>
             </div>
+            <div id="weather-note" class="weather-note hidden">
+                <span class="weather-icon">🌤️</span>
+                Weather data taken into consideration
+            </div>
         </section>
 
         <!-- Controls Section -->
@@ -48,18 +52,6 @@
                 <div class="control-group">
                     <label for="end-date">End Date:</label>
                     <input type="date" id="end-date" name="end-date">
-                </div>
-                <div class="control-group">
-                    <label for="weather-select">Weather:</label>
-                    <select id="weather-select" name="weather">
-                        <option value="">Loading...</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="event-select">Event:</label>
-                    <select id="event-select" name="event">
-                        <option value="">Loading...</option>
-                    </select>
                 </div>
                 <button id="predict-btn" class="predict-button">Generate Predictions</button>
             </div>
@@ -96,6 +88,47 @@
                     <span class="legend-color management"></span>
                     <span>Management</span>
                 </div>
+            </div>
+        </section>
+
+        <!-- Detailed Analysis Section -->
+        <section class="detailed-analysis hidden" id="detailed-analysis">
+            <h2>Detailed Analysis</h2>
+            <div class="detailed-header">
+                <h3 id="detailed-date">Selected Date</h3>
+                <button id="close-detailed" class="close-button">×</button>
+            </div>
+            <div class="detailed-controls">
+                <div class="control-group">
+                    <label for="event-select">Event:</label>
+                    <select id="event-select" name="event">
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+                <button id="update-detailed" class="predict-button">Update Prediction</button>
+            </div>
+            <div class="detailed-info">
+                <div class="info-cards">
+                    <div class="info-card">
+                        <h4>Expected Customers</h4>
+                        <div class="info-value" id="detailed-customers">-</div>
+                    </div>
+                    <div class="info-card">
+                        <h4>Total Hours</h4>
+                        <div class="info-value" id="detailed-hours">-</div>
+                    </div>
+                    <div class="info-card">
+                        <h4>Weather</h4>
+                        <div class="info-value" id="detailed-weather">-</div>
+                    </div>
+                </div>
+                <div id="detailed-weather-note" class="weather-note hidden">
+                    <span class="weather-icon">🌤️</span>
+                    Weather data taken into consideration
+                </div>
+            </div>
+            <div class="detailed-chart-container">
+                <canvas id="detailed-chart"></canvas>
             </div>
         </section>
 
