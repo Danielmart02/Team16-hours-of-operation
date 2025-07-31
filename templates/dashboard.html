@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cal Poly Pomona Dining Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="header-content">
+                <img src="{{ url_for('static', filename='images/cpp_logo.svg') }}" alt="Cal Poly Pomona Logo" class="logo">
+                <h1 class="title">Cal Poly Pomona Dining Dashboard</h1>
+            </div>
+        </header>
+
+        <!-- Quick Information Section -->
+        <section class="quick-info">
+            <h2>Today's Quick Information</h2>
+            <div class="info-cards">
+                <div class="info-card">
+                    <h3>Workers Needed</h3>
+                    <div class="info-value" id="workers-needed">Loading...</div>
+                </div>
+                <div class="info-card">
+                    <h3>People Expected</h3>
+                    <div class="info-value" id="people-expected">Loading...</div>
+                </div>
+                <div class="info-card">
+                    <h3>Total Hours</h3>
+                    <div class="info-value" id="total-hours">Loading...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Controls Section -->
+        <section class="controls">
+            <h2>Prediction Controls</h2>
+            <div class="control-panel">
+                <div class="control-group">
+                    <label for="start-date">Start Date:</label>
+                    <input type="date" id="start-date" name="start-date">
+                </div>
+                <div class="control-group">
+                    <label for="end-date">End Date:</label>
+                    <input type="date" id="end-date" name="end-date">
+                </div>
+                <div class="control-group">
+                    <label for="weather-select">Weather:</label>
+                    <select id="weather-select" name="weather">
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="event-select">Event:</label>
+                    <select id="event-select" name="event">
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+                <button id="predict-btn" class="predict-button">Generate Predictions</button>
+            </div>
+        </section>
+
+        <!-- Chart Section -->
+        <section class="chart-section">
+            <h2>Staffing Predictions</h2>
+            <div class="chart-container">
+                <canvas id="staffing-chart"></canvas>
+            </div>
+            <div class="chart-legend" id="chart-legend">
+                <div class="legend-item">
+                    <span class="legend-color general"></span>
+                    <span>General Purpose Worker</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color cashier"></span>
+                    <span>Cashier</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color chef"></span>
+                    <span>Chef</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color line"></span>
+                    <span>Line Workers</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color dishwasher"></span>
+                    <span>Dishwasher</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color management"></span>
+                    <span>Management</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="loading-spinner"></div>
+            <p>Generating predictions...</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
