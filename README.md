@@ -21,7 +21,6 @@ A sophisticated web-based dashboard for predicting staffing requirements at Cal 
 ### **Enhanced User Interface**
 - **Modern Design**: Cal Poly Pomona branded interface with smooth animations
 - **Responsive Layout**: Works seamlessly on desktop, tablet, and mobile devices
-- **Resizable Chat Widget**: Drag to resize or use full-screen mode for extended conversations
 - **Interactive Charts**: Click-to-explore functionality with hover details
 - **Accessibility Features**: Keyboard navigation, focus indicators, and screen reader support
 
@@ -32,14 +31,9 @@ The integrated AI assistant can help with:
 - **Staffing Predictions**: "What staffing do I need for next week if it's sunny with no events?"
 - **Weather Impact Analysis**: "How does rainy weather affect dining traffic?"
 - **Event Planning**: "How many extra workers do I need for graduation?"
-- **Historical Insights**: "Show me data from last month's career fair"
 - **Operational Guidance**: "How should I schedule my employees for optimal coverage?"
 
 ### **Chat Features**
-- **Resizable Interface**: Drag from bottom-left corner to resize
-- **Full-Screen Mode**: Press F11 or click the expand button for immersive conversations
-- **Minimize Option**: Collapse to header-only view
-- **Keyboard Shortcuts**: F11 (fullscreen), Escape (close), Enter (send)
 - **Smart Fallbacks**: Helpful responses even when AI agent is unavailable
 
 ## 📊 Worker Types Predicted
