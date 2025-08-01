@@ -301,18 +301,4 @@ python app.py --port 5001
 4. Test thoroughly
 5. Submit a pull request
 
-## 📄 License
-
-This project is developed for Cal Poly Pomona's dining services. Please contact the development team for usage permissions.
-
-## 📞 Support
-
-For technical support or questions:
-- Check the troubleshooting section above
-- Review AWS Bedrock documentation for AI-related issues
-- Ensure all dependencies are properly installed
-- Verify AWS credentials and permissions
-
----
-
 **Built with ❤️ for Cal Poly Pomona Dining Services**
