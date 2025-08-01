@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="40" cy="40" r="38" fill="#1B5E20" stroke="#FFC107" stroke-width="4"/>
+  <text x="40" y="30" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="12" font-weight="bold">CAL POLY</text>
+  <text x="40" y="45" text-anchor="middle" fill="#FFC107" font-family="Arial, sans-serif" font-size="10" font-weight="bold">POMONA</text>
+  <text x="40" y="58" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="8">DINING</text>
+</svg>
