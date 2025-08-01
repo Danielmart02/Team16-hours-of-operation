@@ -3,8 +3,29 @@ from datetime import datetime, timedelta
 import json
 import numpy as np
 import requests
+import logging
+from dining_agent import DiningHallAgent
 
 app = Flask(__name__)
+
+# Initialize the AI agent (with error handling)
+dining_agent = None
+agent_error = None
+
+try:
+    dining_agent = DiningHallAgent(
+        enable_tracing=False,
+        recursion_limit=50  # Increased from default 15
+    )
+    print("✅ Dining Agent initialized successfully with recursion limit: 50")
+except Exception as e:
+    agent_error = str(e)
+    print(f"❌ Failed to initialize Dining Agent: {e}")
+    print("Chat functionality will use fallback responses")
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Custom JSON encoder to handle numpy types
 class NumpyEncoder(json.JSONEncoder):
@@ -499,6 +520,165 @@ def get_tomorrow_summary():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# AI Chat Endpoints
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    """Handle chat messages with the AI agent."""
+    try:
+        data = request.get_json()
+        if not data or 'message' not in data:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        user_message = data['message'].strip()
+        if not user_message:
+            return jsonify({'error': 'Message cannot be empty'}), 400
+        
+        # Check if agent is available
+        if dining_agent is None:
+            # Fallback response when agent is not available
+            fallback_response = get_fallback_response(user_message)
+            return jsonify({
+                'response': fallback_response,
+                'agent_available': False,
+                'fallback': True
+            })
+        
+        # Use the real AI agent with increased recursion limit and timeout
+        try:
+            logger.info(f"Processing chat message: {user_message[:50]}...")
+            
+            response = dining_agent.ask(user_message)
+            
+            # Check if response is too short (might indicate an error)
+            if len(response.strip()) < 10:
+                logger.warning(f"Suspiciously short response: {response}")
+                fallback_response = get_fallback_response(user_message)
+                return jsonify({
+                    'response': fallback_response,
+                    'agent_available': False,
+                    'fallback': True,
+                    'warning': 'Agent returned incomplete response'
+                })
+            
+            logger.info(f"Agent response generated successfully (length: {len(response)})")
+            return jsonify({
+                'response': response,
+                'agent_available': True,
+                'fallback': False
+            })
+            
+        except Exception as agent_error:
+            error_str = str(agent_error)
+            logger.error(f"Agent error: {agent_error}")
+            
+            # Handle specific recursion limit error
+            if "recursion limit" in error_str.lower() or "GRAPH_RECURSION_LIMIT" in error_str:
+                logger.warning("Recursion limit reached - providing fallback response")
+                fallback_response = ("I apologize, but that question is quite complex and I'm having trouble processing it. "
+                                   "Let me provide a simpler response: " + get_fallback_response(user_message))
+                return jsonify({
+                    'response': fallback_response,
+                    'agent_available': True,  # Agent is available, just hit limits
+                    'fallback': True,
+                    'error_type': 'recursion_limit'
+                })
+            
+            # Handle timeout errors
+            elif "timeout" in error_str.lower() or "time" in error_str.lower():
+                logger.warning("Agent timeout - providing fallback response")
+                fallback_response = ("I'm taking too long to process that request. "
+                                   "Here's a quick response: " + get_fallback_response(user_message))
+                return jsonify({
+                    'response': fallback_response,
+                    'agent_available': True,
+                    'fallback': True,
+                    'error_type': 'timeout'
+                })
+            
+            # Handle other agent errors
+            fallback_response = get_fallback_response(user_message)
+            return jsonify({
+                'response': fallback_response,
+                'agent_available': False,
+                'fallback': True,
+                'error': str(agent_error)
+            })
+            
+    except Exception as e:
+        logger.error(f"Chat endpoint error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/chat/clear', methods=['POST'])
+def clear_chat_history():
+    """Clear the chat conversation history."""
+    try:
+        if dining_agent:
+            dining_agent.clear_history()
+            logger.info("Chat history cleared successfully")
+            return jsonify({'success': True, 'message': 'Chat history cleared'})
+        else:
+            return jsonify({'success': True, 'message': 'No active agent session'})
+    except Exception as e:
+        logger.error(f"Clear history error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/chat/reset', methods=['POST'])
+def reset_chat_agent():
+    """Reset the chat agent to clear any stuck states."""
+    try:
+        if dining_agent:
+            dining_agent.clear_history()
+            logger.info("Chat agent reset successfully")
+            return jsonify({'success': True, 'message': 'Chat agent reset'})
+        else:
+            return jsonify({'success': True, 'message': 'No active agent session'})
+    except Exception as e:
+        logger.error(f"Reset agent error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/chat/status', methods=['GET'])
+def chat_status():
+    """Get the status of the AI agent."""
+    return jsonify({
+        'agent_available': dining_agent is not None,
+        'agent_error': agent_error,
+        'conversation_length': len(dining_agent.get_history()) if dining_agent else 0
+    })
+
+def get_fallback_response(message):
+    """Provide fallback responses when the AI agent is not available."""
+    message_lower = message.lower()
+    
+    # Staffing-related responses
+    if any(word in message_lower for word in ['staff', 'worker', 'employee', 'hire', 'schedule']):
+        return ("I'd love to help with staffing questions! However, the AI agent is currently unavailable. "
+                "You can use the dashboard above to generate staffing predictions by selecting dates and clicking 'Generate Predictions'. "
+                "For detailed analysis, click on any bar in the chart.")
+    
+    # Weather-related responses
+    elif any(word in message_lower for word in ['weather', 'rain', 'sunny', 'cloudy']):
+        return ("Weather significantly impacts dining patterns! While the AI agent is offline, you can see how weather affects predictions by using the detailed analysis feature. Click on any date in the chart above to explore weather impacts.")
+    
+    # Event-related responses
+    elif any(word in message_lower for word in ['event', 'graduation', 'fair', 'sports']):
+        return ("Campus events definitely affect staffing needs! The detailed analysis section (click on chart bars) lets you explore different event scenarios and their impact on staffing requirements.")
+    
+    # Prediction-related responses
+    elif any(word in message_lower for word in ['predict', 'forecast', 'future', 'tomorrow', 'next week']):
+        return ("For predictions, use the dashboard controls above! Set your date range and click 'Generate Predictions' to see staffing forecasts. Click on individual days for detailed breakdowns with weather and event considerations.")
+    
+    # Data/history related
+    elif any(word in message_lower for word in ['data', 'history', 'past', 'previous']):
+        return ("While I can't access historical data right now, the prediction models are trained on historical patterns. The dashboard shows future predictions based on past trends and seasonal patterns.")
+    
+    # Greeting responses
+    elif any(word in message_lower for word in ['hello', 'hi', 'hey', 'help']):
+        return ("Hello! I'm the Cal Poly Pomona Dining Assistant. While the AI agent is temporarily unavailable, you can still use the dashboard above to generate staffing predictions, explore different scenarios, and analyze detailed breakdowns by clicking on chart elements.")
+    
+    # Default response
+    else:
+        return ("I apologize, but the AI agent is currently unavailable. However, you can still use the interactive dashboard above to explore staffing predictions, analyze different weather and event scenarios, and get detailed breakdowns by clicking on the chart elements. The dashboard provides comprehensive staffing insights for Cal Poly Pomona dining operations!")
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

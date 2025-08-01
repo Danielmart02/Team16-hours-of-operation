@@ -137,8 +137,57 @@
             <div class="loading-spinner"></div>
             <p>Generating predictions...</p>
         </div>
+
+        <!-- AI Chat Widget -->
+        <div class="chat-widget">
+            <button id="chat-toggle" class="chat-toggle" title="Chat with AI Assistant">
+                🤖
+            </button>
+            <div id="chat-container" class="chat-container">
+                <div class="chat-header">
+                    <div class="chat-header-left">
+                        <div class="chat-avatar">🎓</div>
+                        <div class="chat-info">
+                            <h3>Dining Assistant</h3>
+                            <p>Ask me about staffing predictions</p>
+                        </div>
+                    </div>
+                    <div class="chat-header-controls">
+                        <button id="chat-minimize" class="chat-control-btn" title="Minimize">
+                            ➖
+                        </button>
+                        <button id="chat-fullscreen" class="chat-control-btn" title="Toggle Fullscreen">
+                            ⛶
+                        </button>
+                        <button id="chat-close" class="chat-control-btn" title="Close">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                <div id="chat-messages" class="chat-messages">
+                    <div class="message bot">
+                        Hi! I'm your Cal Poly Pomona Dining Assistant. I can help you understand staffing predictions, explain the data, or answer questions about dining operations. How can I help you today?
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <textarea 
+                            id="chat-input" 
+                            class="chat-input" 
+                            placeholder="Ask me about staffing predictions..."
+                            rows="1"
+                        ></textarea>
+                        <button id="chat-send" class="chat-send" title="Send message">
+                            ➤
+                        </button>
+                    </div>
+                </div>
+                <div class="resize-handle" id="resize-handle"></div>
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 </body>
 </html>

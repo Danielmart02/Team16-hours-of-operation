@@ -10,6 +10,9 @@ class DiningDashboard {
     }
 
     async init() {
+        // Ensure detailed analysis is hidden on load
+        this.closeDetailedView();
+        
         await this.loadEventOptions();
         this.setupEventListeners();
         this.setDefaultDates();
@@ -68,7 +71,9 @@ class DiningDashboard {
             this.generateSimplePredictions();
         });
 
-        document.getElementById('close-detailed').addEventListener('click', () => {
+        document.getElementById('close-detailed').addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             this.closeDetailedView();
         });
 
@@ -84,6 +89,13 @@ class DiningDashboard {
             } else if (e.key === 'Enter') {
                 // Otherwise, generate simple predictions
                 this.generateSimplePredictions();
+            }
+        });
+
+        // Allow Escape key to close detailed view
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeDetailedView();
             }
         });
     }
@@ -277,10 +289,19 @@ class DiningDashboard {
                     intersect: false
                 },
                 onClick: (event, elements) => {
+                    console.log('Chart clicked, elements:', elements); // Debug log
                     if (elements.length > 0) {
                         const index = elements[0].index;
                         const selectedPrediction = predictions[index];
-                        this.openDetailedView(selectedPrediction.date);
+                        console.log('Selected prediction:', selectedPrediction); // Debug log
+                        
+                        if (selectedPrediction && selectedPrediction.date) {
+                            this.openDetailedView(selectedPrediction.date);
+                        } else {
+                            console.error('Invalid prediction data:', selectedPrediction);
+                        }
+                    } else {
+                        console.log('No chart elements clicked');
                     }
                 }
             }
@@ -288,28 +309,48 @@ class DiningDashboard {
     }
 
     async openDetailedView(date) {
+        console.log('Opening detailed view for date:', date); // Debug log
+        
         this.selectedDate = date;
+        
+        // Check if detailed analysis element exists
+        const detailedSection = document.getElementById('detailed-analysis');
+        if (!detailedSection) {
+            console.error('Detailed analysis section not found!');
+            return;
+        }
         
         // Update the detailed view header
         const dateObj = new Date(date);
-        document.getElementById('detailed-date').textContent = 
-            dateObj.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
+        const detailedDateElement = document.getElementById('detailed-date');
+        if (detailedDateElement) {
+            detailedDateElement.textContent = 
+                dateObj.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+        }
 
         // Reset event selection to default
-        document.getElementById('event-select').value = 'regular_day';
+        const eventSelect = document.getElementById('event-select');
+        if (eventSelect) {
+            eventSelect.value = 'regular_day';
+        }
 
         // Show the detailed analysis section
-        document.getElementById('detailed-analysis').classList.remove('hidden');
+        console.log('Removing hidden class from detailed section'); // Debug log
+        detailedSection.classList.remove('hidden');
+        detailedSection.style.display = 'block'; // Force display
         
         // Scroll to the detailed section
-        document.getElementById('detailed-analysis').scrollIntoView({ 
-            behavior: 'smooth' 
-        });
+        setTimeout(() => {
+            detailedSection.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }, 100);
 
         // Load initial detailed prediction
         await this.updateDetailedPrediction();
@@ -432,13 +473,34 @@ class DiningDashboard {
     }
 
     closeDetailedView() {
-        document.getElementById('detailed-analysis').classList.add('hidden');
+        console.log('Closing detailed view'); // Debug log
+        
+        const detailedSection = document.getElementById('detailed-analysis');
+        if (!detailedSection) {
+            console.error('Detailed analysis section not found when trying to close!');
+            return;
+        }
+        
+        // Ensure the section is properly hidden
+        detailedSection.classList.add('hidden');
+        detailedSection.style.display = 'none';
+        
+        // Reset selected date
         this.selectedDate = null;
         
+        // Destroy detailed chart if it exists
         if (this.detailedChart) {
             this.detailedChart.destroy();
             this.detailedChart = null;
         }
+        
+        // Clear any form data
+        const eventSelect = document.getElementById('event-select');
+        if (eventSelect) {
+            eventSelect.value = 'regular_day';
+        }
+        
+        console.log('Detailed view closed successfully'); // Debug log
     }
 
     showLoading(show) {
