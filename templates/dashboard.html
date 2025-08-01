@@ -4,141 +4,1373 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cal Poly Pomona Dining Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    
+    <style>
+        :root {
+            /* Cal Poly Pomona Colors */
+            --cpp-green-primary: #1B5E20;
+            --cpp-green-secondary: #2E7D32;
+            --cpp-green-light: #4CAF50;
+            --cpp-green-accent: #66BB6A;
+            --cpp-gold: #FFC107;
+            --cpp-gold-dark: #FF8F00;
+            --cpp-gray-light: #F8F9FA;
+            --cpp-gray-medium: #6C757D;
+            --cpp-gray-dark: #495057;
+            --cpp-white: #FFFFFF;
+            
+            /* Shadows and transitions */
+            --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, var(--cpp-gray-light) 0%, #E8F5E8 100%);
+            color: var(--cpp-gray-dark);
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header-section {
+            background: linear-gradient(135deg, var(--cpp-green-primary) 0%, var(--cpp-green-secondary) 100%);
+            color: white;
+            padding: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .cpp-logo {
+            height: 60px;
+            width: auto;
+            margin-right: 1rem;
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            background: linear-gradient(45deg, white, var(--cpp-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin: 0.5rem 0 0 0;
+        }
+
+        /* Card Styles */
+        .modern-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow-soft);
+            border: none;
+            transition: var(--transition-smooth);
+            overflow: hidden;
+        }
+
+        .modern-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .card-header-modern {
+            background: linear-gradient(135deg, var(--cpp-green-light) 0%, var(--cpp-green-accent) 100%);
+            color: white;
+            border: none;
+            padding: 1.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .card-body-modern {
+            padding: 2rem;
+        }
+
+        /* Statistics Cards */
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow-soft);
+            border: none;
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--cpp-green-primary), var(--cpp-gold));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-large);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--cpp-green-primary);
+            margin: 0;
+        }
+
+        .stat-label {
+            color: var(--cpp-gray-medium);
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.5rem;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            color: var(--cpp-gold);
+            margin-bottom: 1rem;
+        }
+
+        /* Form Styles */
+        .form-control-modern {
+            border: 2px solid #E9ECEF;
+            border-radius: 12px;
+            padding: 0.875rem 1rem;
+            font-size: 0.95rem;
+            transition: var(--transition-smooth);
+            background: white;
+        }
+
+        .form-control-modern:focus {
+            border-color: var(--cpp-green-light);
+            box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+            outline: none;
+        }
+
+        .btn-cpp-primary {
+            background: linear-gradient(135deg, var(--cpp-green-primary) 0%, var(--cpp-green-secondary) 100%);
+            border: none;
+            color: white;
+            padding: 0.875rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: var(--transition-smooth);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-cpp-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            background: linear-gradient(135deg, var(--cpp-green-secondary) 0%, var(--cpp-green-light) 100%);
+            color: white;
+        }
+
+        .btn-cpp-secondary {
+            background: linear-gradient(135deg, var(--cpp-gold) 0%, var(--cpp-gold-dark) 100%);
+            border: none;
+            color: var(--cpp-green-primary);
+            padding: 0.875rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-cpp-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            color: var(--cpp-green-primary);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-soft);
+        }
+
+        /* Chat Widget Styles */
+        .chat-widget {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 400px;
+            max-width: calc(100vw - 2rem);
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-large);
+            z-index: 1050;
+            transition: var(--transition-smooth);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--cpp-green-primary) 0%, var(--cpp-green-secondary) 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--cpp-green-primary) 0%, var(--cpp-green-secondary) 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow-medium);
+            transition: var(--transition-smooth);
+            z-index: 1051;
+        }
+
+        .chat-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-large);
+            background: linear-gradient(135deg, var(--cpp-green-secondary) 0%, var(--cpp-green-light) 100%);
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            border: 3px solid var(--cpp-gray-light);
+            border-top: 3px solid var(--cpp-green-primary);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-title {
+                font-size: 2rem;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .chat-widget {
+                width: calc(100vw - 1rem);
+                bottom: 1rem;
+                right: 0.5rem;
+            }
+            
+            .chat-toggle {
+                bottom: 1rem;
+                right: 1rem;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Alert Styles */
+        .alert-cpp {
+            border: none;
+            border-radius: 12px;
+            border-left: 4px solid var(--cpp-green-primary);
+            background: linear-gradient(90deg, rgba(27, 94, 32, 0.05) 0%, rgba(76, 175, 80, 0.05) 100%);
+        }
+
+        /* Badge Styles */
+        .badge-cpp {
+            background: linear-gradient(135deg, var(--cpp-gold) 0%, var(--cpp-gold-dark) 100%);
+            color: var(--cpp-green-primary);
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+
+        /* Table Styles */
+        .table-modern {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .table-modern th {
+            background: var(--cpp-green-primary);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 1rem;
+        }
+
+        .table-modern td {
+            padding: 1rem;
+            border-color: #F1F3F4;
+            vertical-align: middle;
+        }
+
+        .table-modern tbody tr {
+            transition: var(--transition-smooth);
+        }
+
+        .table-modern tbody tr:hover {
+            background-color: rgba(76, 175, 80, 0.05);
+            transform: translateX(2px);
+        }
+
+        .table-modern tbody tr[style*="cursor: pointer"]:hover {
+            background-color: rgba(76, 175, 80, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header Section -->
-        <header class="header">
+    <!-- Header Section -->
+    <section class="header-section">
+        <div class="container">
             <div class="header-content">
-                <img src="{{ url_for('static', filename='images/cpp_logo.svg') }}" alt="Cal Poly Pomona Logo" class="logo">
-                <h1 class="title">Cal Poly Pomona Dining Dashboard</h1>
-            </div>
-        </header>
-
-        <!-- Quick Information Section -->
-        <section class="quick-info">
-            <h2>Tomorrow's Quick Information</h2>
-            <div class="info-cards">
-                <div class="info-card">
-                    <h3>Workers Needed</h3>
-                    <div class="info-value" id="workers-needed">Loading...</div>
-                </div>
-                <div class="info-card">
-                    <h3>People Expected</h3>
-                    <div class="info-value" id="people-expected">Loading...</div>
-                </div>
-                <div class="info-card">
-                    <h3>Total Hours</h3>
-                    <div class="info-value" id="total-hours">Loading...</div>
-                </div>
-            </div>
-            <div id="weather-note" class="weather-note hidden">
-                <span class="weather-icon">🌤️</span>
-                Weather data taken into consideration
-            </div>
-        </section>
-
-        <!-- Controls Section -->
-        <section class="controls">
-            <h2>Prediction Controls</h2>
-            <div class="control-panel">
-                <div class="control-group">
-                    <label for="start-date">Start Date:</label>
-                    <input type="date" id="start-date" name="start-date">
-                </div>
-                <div class="control-group">
-                    <label for="end-date">End Date:</label>
-                    <input type="date" id="end-date" name="end-date">
-                </div>
-                <button id="predict-btn" class="predict-button">Generate Predictions</button>
-            </div>
-        </section>
-
-        <!-- Chart Section -->
-        <section class="chart-section">
-            <h2>Staffing Predictions</h2>
-            <div class="chart-container">
-                <canvas id="staffing-chart"></canvas>
-            </div>
-            <div class="chart-legend" id="chart-legend">
-                <div class="legend-item">
-                    <span class="legend-color general"></span>
-                    <span>General Purpose Worker</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-color cashier"></span>
-                    <span>Cashier</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-color chef"></span>
-                    <span>Chef</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-color line"></span>
-                    <span>Line Workers</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-color dishwasher"></span>
-                    <span>Dishwasher</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-color management"></span>
-                    <span>Management</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Detailed Analysis Section -->
-        <section class="detailed-analysis hidden" id="detailed-analysis">
-            <h2>Detailed Analysis</h2>
-            <div class="detailed-header">
-                <h3 id="detailed-date">Selected Date</h3>
-                <button id="close-detailed" class="close-button">×</button>
-            </div>
-            <div class="detailed-controls">
-                <div class="control-group">
-                    <label for="event-select">Event:</label>
-                    <select id="event-select" name="event">
-                        <option value="">Loading...</option>
-                    </select>
-                </div>
-                <button id="update-detailed" class="predict-button">Update Prediction</button>
-            </div>
-            <div class="detailed-info">
-                <div class="info-cards">
-                    <div class="info-card">
-                        <h4>Expected Customers</h4>
-                        <div class="info-value" id="detailed-customers">-</div>
-                    </div>
-                    <div class="info-card">
-                        <h4>Total Hours</h4>
-                        <div class="info-value" id="detailed-hours">-</div>
-                    </div>
-                    <div class="info-card">
-                        <h4>Weather</h4>
-                        <div class="info-value" id="detailed-weather">-</div>
+                <div class="d-flex align-items-center mb-3">
+                    <svg class="cpp-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100" height="100" fill="#1B5E20"/>
+                        <polygon points="20,20 80,20 80,50 50,80 20,50" fill="#FFC107"/>
+                        <text x="50" y="45" text-anchor="middle" fill="white" font-size="16" font-weight="bold">CPP</text>
+                    </svg>
+                    <div>
+                        <h1 class="header-title">Dining Dashboard</h1>
+                        <p class="header-subtitle">Cal Poly Pomona Dining Services Analytics</p>
                     </div>
                 </div>
-                <div id="detailed-weather-note" class="weather-note hidden">
-                    <span class="weather-icon">🌤️</span>
-                    Weather data taken into consideration
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container-fluid py-5">
+        <!-- Quick Stats Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="mb-4 text-center" style="color: var(--cpp-green-primary); font-weight: 700;">Today's Overview</h2>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card fade-in">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-number" id="todayWorkers">--</div>
+                    <div class="stat-label">Workers Needed</div>
                 </div>
             </div>
-            <div class="detailed-chart-container">
-                <canvas id="detailed-chart"></canvas>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card fade-in" style="animation-delay: 0.1s;">
+                    <div class="stat-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="stat-number" id="todayCustomers">--</div>
+                    <div class="stat-label">Expected Customers</div>
+                </div>
             </div>
-        </section>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card fade-in" style="animation-delay: 0.2s;">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-number" id="todayHours">--</div>
+                    <div class="stat-label">Total Hours</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card fade-in" style="animation-delay: 0.3s;">
+                    <div class="stat-icon">
+                        <i class="fas fa-cloud-sun"></i>
+                    </div>
+                    <div class="stat-number" id="todayWeather">Sunny</div>
+                    <div class="stat-label">Weather Forecast</div>
+                </div>
+            </div>
+        </div>
 
-        <!-- Loading Overlay -->
-        <div id="loading-overlay" class="loading-overlay hidden">
-            <div class="loading-spinner"></div>
-            <p>Generating predictions...</p>
+        <div class="row">
+            <!-- Prediction Controls -->
+            <div class="col-lg-4 mb-4">
+                <div class="modern-card slide-up">
+                    <div class="card-header-modern">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Staffing Predictions
+                    </div>
+                    <div class="card-body-modern">
+                        <form id="predictionForm">
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-calendar me-2"></i>Date Range
+                                </label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <input type="date" class="form-control form-control-modern" id="startDate" required>
+                                        <small class="text-muted">Start Date</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="date" class="form-control form-control-modern" id="endDate" required>
+                                        <small class="text-muted">End Date</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-cloud me-2"></i>Weather Condition
+                                </label>
+                                <select class="form-control form-control-modern" id="weatherSelect">
+                                    <option value="sunny">☀️ Sunny</option>
+                                    <option value="cloudy">☁️ Cloudy</option>
+                                    <option value="rainy">🌧️ Rainy</option>
+                                    <option value="extreme_heat">🔥 Extreme Heat</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-star me-2"></i>Campus Event
+                                </label>
+                                <select class="form-control form-control-modern" id="eventSelect">
+                                    <option value="regular_day">📅 Regular Day</option>
+                                    <option value="club_fair">🎪 Club Fair</option>
+                                    <option value="career_fair">💼 Career Fair</option>
+                                    <option value="sports_events">⚽ Sports Events</option>
+                                    <option value="graduation">🎓 Graduation</option>
+                                    <option value="parent_weekend">👨‍👩‍👧‍👦 Parent Weekend</option>
+                                    <option value="prospective_student_day">🎒 Prospective Student Day</option>
+                                    <option value="conference_hosting">🏢 Conference Hosting</option>
+                                    <option value="campus_construction">🚧 Campus Construction</option>
+                                </select>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-cpp-primary">
+                                    <i class="fas fa-chart-line me-2"></i>Generate Predictions
+                                </button>
+                                <button type="button" class="btn btn-cpp-secondary" id="quickPredictBtn">
+                                    <i class="fas fa-bolt me-2"></i>Quick Weekly Forecast
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Loading Indicator -->
+                        <div id="loadingIndicator" class="text-center mt-4" style="display: none;">
+                            <div class="loading-spinner"></div>
+                            <p class="mt-2 text-muted">Generating predictions...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Assistant Card -->
+                <div class="modern-card slide-up mt-4" style="animation-delay: 0.2s;">
+                    <div class="card-header-modern">
+                        <i class="fas fa-robot me-2"></i>
+                        AI Assistant
+                    </div>
+                    <div class="card-body-modern text-center">
+                        <p class="mb-3">Get intelligent insights about staffing patterns, weather impacts, and operational recommendations.</p>
+                        <button class="btn btn-cpp-primary" id="openChatBtn">
+                            <i class="fas fa-comments me-2"></i>Start Conversation
+                        </button>
+                        <div class="mt-3">
+                            <span class="badge badge-cpp">
+                                <i class="fas fa-circle text-success me-1"></i>AI Ready
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Display -->
+            <div class="col-lg-8 mb-4">
+                <div class="modern-card slide-up" style="animation-delay: 0.1s;">
+                    <div class="card-header-modern d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-chart-bar me-2"></i>Staffing Predictions
+                        </span>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-light btn-sm" id="chartTypeBtn">
+                                <i class="fas fa-exchange-alt me-1"></i>Switch View
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="chart-container">
+                            <canvas id="staffingChart"></canvas>
+                        </div>
+                        
+                        <!-- Chart Legend -->
+                        <div class="row mt-4" id="chartLegend">
+                            <div class="col-md-2 text-center">
+                                <div class="badge" style="background: #2E7D32; color: white; padding: 0.5rem 1rem;">General</div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="badge" style="background: #388E3C; color: white; padding: 0.5rem 1rem;">Cashier</div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="badge" style="background: #43A047; color: white; padding: 0.5rem 1rem;">Chef</div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="badge" style="background: #4CAF50; color: white; padding: 0.5rem 1rem;">Line</div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="badge" style="background: #66BB6A; color: white; padding: 0.5rem 1rem;">Dishwasher</div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="badge" style="background: #FFC107; color: #1B5E20; padding: 0.5rem 1rem;">Management</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="modern-card slide-up" style="animation-delay: 0.4s;">
+                    <div class="card-header-modern">
+                        <i class="fas fa-table me-2"></i>Detailed Predictions
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="table-responsive">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Weather</th>
+                                        <th>Event</th>
+                                        <th>Expected Customers</th>
+                                        <th>Total Hours</th>
+                                        <th>General</th>
+                                        <th>Cashier</th>
+                                        <th>Chef</th>
+                                        <th>Line Workers</th>
+                                        <th>Dishwasher</th>
+                                        <th>Management</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="predictionsTableBody">
+                                    <tr>
+                                        <td colspan="11" class="text-center py-5 text-muted">
+                                            <i class="fas fa-chart-line fa-3x mb-3"></i>
+                                            <br>Generate predictions to see detailed results
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <!-- Chat Widget -->
+    <div class="chat-widget" id="chatWidget" style="display: none;">
+        <div class="chat-header">
+            <div>
+                <i class="fas fa-robot me-2"></i>
+                <strong>Dining Assistant</strong>
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-light" id="minimizeChatBtn">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-light ms-1" id="closeChatBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="chat-body" style="height: 400px; overflow-y: auto; padding: 1rem;">
+            <div class="chat-message system">
+                <div class="alert alert-cpp">
+                    <i class="fas fa-robot me-2"></i>
+                    Hello! I'm your dining assistant. Ask me about staffing predictions, weather impacts, or operational insights.
+                </div>
+            </div>
+        </div>
+        <div class="chat-input" style="padding: 1rem; border-top: 1px solid #E9ECEF;">
+            <div class="input-group">
+                <input type="text" class="form-control form-control-modern" id="chatInput" placeholder="Ask me anything...">
+                <button class="btn btn-cpp-primary" id="sendChatBtn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Toggle Button -->
+    <button class="chat-toggle" id="chatToggleBtn">
+        <i class="fas fa-comments"></i>
+    </button>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Global variables
+        let staffingChart = null;
+        let currentChartType = 'bar';
+        
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard initializing...');
+            initializeDashboard();
+            setupEventListeners();
+            loadTodaysSummary();
+        });
+
+        function showSuccess(message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+            alertDiv.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+        }
+
+        function initializeDashboard() {
+            // Set default dates
+            const today = new Date();
+            const nextWeek = new Date(today);
+            nextWeek.setDate(today.getDate() + 7);
+            
+            document.getElementById('startDate').value = today.toISOString().split('T')[0];
+            document.getElementById('endDate').value = nextWeek.toISOString().split('T')[0];
+            
+            // Initialize chart
+            initializeChart();
+        }
+
+        function setupEventListeners() {
+            // Prediction form
+            document.getElementById('predictionForm').addEventListener('submit', handlePredictionSubmit);
+            document.getElementById('quickPredictBtn').addEventListener('click', handleQuickPredict);
+            document.getElementById('chartTypeBtn').addEventListener('click', toggleChartType);
+            
+            // Chat functionality
+            document.getElementById('chatToggleBtn').addEventListener('click', toggleChat);
+            document.getElementById('openChatBtn').addEventListener('click', toggleChat);
+            document.getElementById('closeChatBtn').addEventListener('click', toggleChat);
+            document.getElementById('minimizeChatBtn').addEventListener('click', minimizeChat);
+            document.getElementById('sendChatBtn').addEventListener('click', sendChatMessage);
+            document.getElementById('chatInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendChatMessage();
+            });
+        }
+
+        function initializeChart() {
+            const ctx = document.getElementById('staffingChart').getContext('2d');
+            
+            staffingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'General Purpose Worker',
+                            data: [],
+                            backgroundColor: '#2E7D32',
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'Cashier',
+                            data: [],
+                            backgroundColor: '#388E3C',
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'Chef',
+                            data: [],
+                            backgroundColor: '#43A047',
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'Line Workers',
+                            data: [],
+                            backgroundColor: '#4CAF50',
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'Dishwasher',
+                            data: [],
+                            backgroundColor: '#66BB6A',
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'Management',
+                            data: [],
+                            backgroundColor: '#FFC107',
+                            borderRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hours Needed'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#FFC107',
+                            bodyColor: 'white',
+                            borderColor: '#1B5E20',
+                            borderWidth: 1
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const elementIndex = elements[0].index;
+                            const clickedDate = staffingChart.data.labels[elementIndex];
+                            handleChartClick(clickedDate, elementIndex);
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadTodaysSummary() {
+            try {
+                const response = await fetch('/api/tomorrow-summary');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error loading summary:', data.error);
+                    return;
+                }
+                
+                // Update stat cards
+                document.getElementById('todayWorkers').textContent = data.total_workers_needed || '--';
+                document.getElementById('todayCustomers').textContent = data.people_expected || '--';
+                document.getElementById('todayHours').textContent = data.total_hours || '--';
+                
+                // Weather icon mapping
+                const weatherIcons = {
+                    'sunny': '☀️',
+                    'cloudy': '☁️',
+                    'rainy': '🌧️',
+                    'extreme_heat': '🔥'
+                };
+                
+                document.getElementById('todayWeather').textContent = weatherIcons['sunny'] || '☀️';
+                
+            } catch (error) {
+                console.error('Error fetching today\'s summary:', error);
+                // Set default values if API fails
+                document.getElementById('todayWorkers').textContent = '--';
+                document.getElementById('todayCustomers').textContent = '--';
+                document.getElementById('todayHours').textContent = '--';
+                document.getElementById('todayWeather').textContent = '☀️';
+            }
+        }
+
+        async function handlePredictionSubmit(e) {
+            e.preventDefault();
+            
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const weather = document.getElementById('weatherSelect').value;
+            const event = document.getElementById('eventSelect').value;
+            
+            console.log('Making prediction request:', { startDate, endDate, weather, event });
+            
+            showLoading();
+            
+            try {
+                // Generate date range
+                const dates = [];
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                
+                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                    dates.push(new Date(d).toISOString().split('T')[0]);
+                }
+                
+                // Update loading indicator with progress
+                updateLoadingProgress(0, dates.length);
+                
+                // Make individual predictions for each date with selected weather and event
+                const predictions = [];
+                
+                for (let i = 0; i < dates.length; i++) {
+                    const date = dates[i];
+                    
+                    // Update progress
+                    updateLoadingProgress(i, dates.length);
+                    
+                    const response = await fetch('/api/predict', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            date: date,
+                            weather: weather,
+                            event: event
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`HTTP ${response.status} for date ${date}: ${errorText}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(`Error for date ${date}: ${data.error}`);
+                    }
+                    
+                    // Format the data to match the expected structure
+                    predictions.push({
+                        date: date,
+                        weather: weather,
+                        event: event,
+                        predicted_transactions: data.predicted_transactions || 0,
+                        total_predicted_hours: data.total_predicted_hours || 0,
+                        workers: data.workers || {}
+                    });
+                }
+                
+                if (predictions.length === 0) {
+                    throw new Error('No prediction data received');
+                }
+                
+                updateChartAndTable(predictions);
+                showSuccess(`Successfully generated predictions for ${predictions.length} days with ${weather} weather and ${event.replace(/_/g, ' ')} conditions. Click on chart bars or table rows for detailed analysis.`);
+                
+            } catch (error) {
+                console.error('Prediction error:', error);
+                showError('Failed to generate predictions: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function updateLoadingProgress(current, total) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const progressText = loadingIndicator.querySelector('p');
+            if (progressText) {
+                progressText.textContent = `Generating predictions... ${current + 1}/${total}`;
+            }
+        }
+
+        async function handleQuickPredict() {
+            const today = new Date();
+            const nextWeek = new Date(today);
+            nextWeek.setDate(today.getDate() + 7);
+            
+            document.getElementById('startDate').value = today.toISOString().split('T')[0];
+            document.getElementById('endDate').value = nextWeek.toISOString().split('T')[0];
+            document.getElementById('weatherSelect').value = 'sunny';
+            document.getElementById('eventSelect').value = 'regular_day';
+            
+            // Trigger the prediction
+            const fakeEvent = { preventDefault: () => {} };
+            await handlePredictionSubmit(fakeEvent);
+        }
+
+        function updateChartAndTable(predictions) {
+            console.log('Updating chart with predictions:', predictions);
+            
+            // Ensure predictions is an array
+            if (!Array.isArray(predictions)) {
+                console.error('Predictions data is not an array:', predictions);
+                showError('Invalid prediction data format received.');
+                return;
+            }
+            
+            // Update chart
+            const labels = predictions.map(p => new Date(p.date).toLocaleDateString());
+            const datasets = staffingChart.data.datasets;
+            
+            // Clear existing data
+            datasets.forEach(dataset => dataset.data = []);
+            
+            // Populate new data
+            predictions.forEach(prediction => {
+                if (prediction.workers) {
+                    datasets[0].data.push(prediction.workers['General Purpose Worker'] || 0);
+                    datasets[1].data.push(prediction.workers['Cashier'] || 0);
+                    datasets[2].data.push(prediction.workers['Chef'] || 0);
+                    datasets[3].data.push(prediction.workers['Line Workers'] || 0);
+                    datasets[4].data.push(prediction.workers['Dishwasher'] || 0);
+                    datasets[5].data.push(prediction.workers['Management'] || 0);
+                } else {
+                    console.warn('Prediction missing workers data:', prediction);
+                    // Fill with zeros if workers data is missing
+                    datasets.forEach(dataset => dataset.data.push(0));
+                }
+            });
+            
+            staffingChart.data.labels = labels;
+            staffingChart.update('active');
+            
+            // Update table
+            updatePredictionsTable(predictions);
+        }
+
+        function updatePredictionsTable(predictions) {
+            const tbody = document.getElementById('predictionsTableBody');
+            tbody.innerHTML = '';
+            
+            // Helper function to round to 1 decimal place
+            const round1 = (num) => Math.round((num || 0) * 10) / 10;
+            
+            predictions.forEach(prediction => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${new Date(prediction.date).toLocaleDateString()}</strong></td>
+                    <td><span class="badge" style="background: var(--cpp-green-light); color: white;">${getWeatherEmoji(prediction.weather)} ${prediction.weather}</span></td>
+                    <td><span class="badge" style="background: var(--cpp-gold); color: var(--cpp-green-primary);">${prediction.event.replace(/_/g, ' ')}</span></td>
+                    <td class="fw-bold">${round1(prediction.predicted_transactions)}</td>
+                    <td class="fw-bold">${round1(prediction.total_predicted_hours)}</td>
+                    <td>${round1(prediction.workers['General Purpose Worker'])}</td>
+                    <td>${round1(prediction.workers['Cashier'])}</td>
+                    <td>${round1(prediction.workers['Chef'])}</td>
+                    <td>${round1(prediction.workers['Line Workers'])}</td>
+                    <td>${round1(prediction.workers['Dishwasher'])}</td>
+                    <td>${round1(prediction.workers['Management'])}</td>
+                `;
+                
+                // Add click handler to row for detailed view
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', () => {
+                    const index = Array.from(tbody.children).indexOf(row);
+                    handleChartClick(prediction.date, index);
+                });
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function getWeatherEmoji(weather) {
+            const emojis = {
+                'sunny': '☀️',
+                'cloudy': '☁️',
+                'rainy': '🌧️',
+                'extreme_heat': '🔥'
+            };
+            return emojis[weather] || '☀️';
+        }
+
+        function toggleChartType() {
+            if (currentChartType === 'bar') {
+                staffingChart.config.type = 'line';
+                staffingChart.options.scales.x.stacked = false;
+                staffingChart.options.scales.y.stacked = false;
+                currentChartType = 'line';
+            } else {
+                staffingChart.config.type = 'bar';
+                staffingChart.options.scales.x.stacked = true;
+                staffingChart.options.scales.y.stacked = true;
+                currentChartType = 'bar';
+            }
+            staffingChart.update();
+        }
+
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+
+        function showError(message) {
+            // Create a better error display
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Error:</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Global variable to store current predictions for chart clicks
+        let currentPredictions = [];
+
+        function updateChartAndTable(predictions) {
+            console.log('Updating chart with predictions:', predictions);
+            
+            // Store predictions globally for chart clicks
+            currentPredictions = predictions;
+            
+            // Ensure predictions is an array
+            if (!Array.isArray(predictions)) {
+                console.error('Predictions data is not an array:', predictions);
+                showError('Invalid prediction data format received.');
+                return;
+            }
+            
+            // Helper function to round to 1 decimal place
+            const round1 = (num) => Math.round((num || 0) * 10) / 10;
+            
+            // Update chart
+            const labels = predictions.map(p => new Date(p.date).toLocaleDateString());
+            const datasets = staffingChart.data.datasets;
+            
+            // Clear existing data
+            datasets.forEach(dataset => dataset.data = []);
+            
+            // Populate new data with rounded values
+            predictions.forEach(prediction => {
+                if (prediction.workers) {
+                    datasets[0].data.push(round1(prediction.workers['General Purpose Worker']));
+                    datasets[1].data.push(round1(prediction.workers['Cashier']));
+                    datasets[2].data.push(round1(prediction.workers['Chef']));
+                    datasets[3].data.push(round1(prediction.workers['Line Workers']));
+                    datasets[4].data.push(round1(prediction.workers['Dishwasher']));
+                    datasets[5].data.push(round1(prediction.workers['Management']));
+                } else {
+                    console.warn('Prediction missing workers data:', prediction);
+                    // Fill with zeros if workers data is missing
+                    datasets.forEach(dataset => dataset.data.push(0));
+                }
+            });
+            
+            staffingChart.data.labels = labels;
+            staffingChart.update('active');
+            
+            // Update table
+            updatePredictionsTable(predictions);
+        }
+
+        async function handleChartClick(clickedDate, elementIndex) {
+            try {
+                // Get the prediction data for the clicked date
+                const prediction = currentPredictions[elementIndex];
+                if (!prediction) {
+                    showError('No data available for the selected date.');
+                    return;
+                }
+
+                // Convert the date format for the API call and use the selected weather/event
+                const dateForAPI = prediction.date;
+                const weather = prediction.weather || 'sunny';
+                const event = prediction.event || 'regular_day';
+                
+                // Call the detailed prediction API with the same weather and event
+                const response = await fetch('/api/detailed-predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        date: dateForAPI,
+                        event: event
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const detailedData = await response.json();
+                
+                if (detailedData.error) {
+                    throw new Error(detailedData.error);
+                }
+
+                // Override the weather from detailed API with our selected weather
+                detailedData.weather = weather;
+                detailedData.event = event;
+
+                // Show detailed prediction modal
+                showDetailedPrediction(detailedData);
+
+            } catch (error) {
+                console.error('Error fetching detailed prediction:', error);
+                showError('Failed to load detailed prediction: ' + error.message);
+            }
+        }
+
+        function showDetailedPrediction(data) {
+            // Helper function to round to 1 decimal place
+            const round1 = (num) => Math.round((num || 0) * 10) / 10;
+            
+            // Create a modal to show detailed prediction
+            const modalHTML = `
+                <div class="modal fade" id="detailModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: var(--cpp-green-primary); color: white;">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-calendar-day me-2"></i>
+                                    Detailed Prediction for ${new Date(data.date).toLocaleDateString()}
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row mb-4">
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <h4 class="text-primary">${round1(data.predicted_transactions)}</h4>
+                                            <small class="text-muted">Expected Customers</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <h4 class="text-success">${round1(data.total_predicted_hours)}</h4>
+                                            <small class="text-muted">Total Hours</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <h4 class="text-warning">${getWeatherEmoji(data.weather)} ${data.weather}</h4>
+                                            <small class="text-muted">Weather</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <h6 class="mb-3">Staffing Breakdown:</h6>
+                                <div class="row">
+                                    ${Object.entries(data.workers).map(([role, hours]) => `
+                                        <div class="col-md-6 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center p-2 border rounded">
+                                                <span>${role}:</span>
+                                                <strong>${round1(hours)} hours</strong>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                
+                                <div class="mt-4 p-3 bg-info bg-opacity-10 rounded">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Event: ${data.event.replace(/_/g, ' ')} | 
+                                        Weather: ${data.weather} ${data.weather_from_api ? '(from API)' : '(selected)'}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('detailModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+            modal.show();
+            
+            // Clean up modal after it's hidden
+            document.getElementById('detailModal').addEventListener('hidden.bs.modal', function() {
+                this.remove();
+            });
+        }
+
+        // Chat functionality
+        function toggleChat() {
+            const chatWidget = document.getElementById('chatWidget');
+            const toggleBtn = document.getElementById('chatToggleBtn');
+            
+            if (chatWidget.style.display === 'none' || !chatWidget.style.display) {
+                chatWidget.style.display = 'block';
+                toggleBtn.style.display = 'none';
+            } else {
+                chatWidget.style.display = 'none';
+                toggleBtn.style.display = 'block';
+            }
+        }
+
+        function minimizeChat() {
+            // Implement minimize functionality
+            toggleChat();
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addChatMessage(message, 'user');
+            input.value = '';
+            
+            // Add loading indicator
+            addChatMessage('Thinking...', 'assistant', true);
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const data = await response.json();
+                
+                // Remove loading message
+                const chatBody = document.querySelector('.chat-body');
+                chatBody.removeChild(chatBody.lastChild);
+                
+                if (data.error) {
+                    addChatMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+                } else {
+                    addChatMessage(data.response || 'I\'m sorry, I couldn\'t generate a response.', 'assistant');
+                }
+                
+            } catch (error) {
+                console.error('Chat error:', error);
+                // Remove loading message
+                const chatBody = document.querySelector('.chat-body');
+                chatBody.removeChild(chatBody.lastChild);
+                addChatMessage('Sorry, I\'m having trouble connecting. Please try again.', 'assistant');
+            }
+        }
+
+        function addChatMessage(message, sender, isLoading = false) {
+            const chatBody = document.querySelector('.chat-body');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${sender}`;
+            
+            if (sender === 'user') {
+                messageDiv.innerHTML = `
+                    <div style="background: var(--cpp-green-primary); color: white; padding: 0.75rem 1rem; border-radius: 18px; margin-left: 2rem; margin-bottom: 1rem;">
+                        ${message}
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div style="background: var(--cpp-gray-light); color: var(--cpp-gray-dark); padding: 0.75rem 1rem; border-radius: 18px; margin-right: 2rem; margin-bottom: 1rem;">
+                        ${isLoading ? '<div class="loading-spinner" style="width: 16px; height: 16px;"></div>' : message}
+                    </div>
+                `;
+            }
+            
+            chatBody.appendChild(messageDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+    </script>
 </body>
 </html>
