@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             /* Cal Poly Pomona Colors */
@@ -1349,28 +1349,39 @@
             }
         }
 
-        function addChatMessage(message, sender, isLoading = false) {
-            const chatBody = document.querySelector('.chat-body');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `chat-message ${sender}`;
-            
-            if (sender === 'user') {
-                messageDiv.innerHTML = `
-                    <div style="background: var(--cpp-green-primary); color: white; padding: 0.75rem 1rem; border-radius: 18px; margin-left: 2rem; margin-bottom: 1rem;">
-                        ${message}
-                    </div>
-                `;
-            } else {
-                messageDiv.innerHTML = `
-                    <div style="background: var(--cpp-gray-light); color: var(--cpp-gray-dark); padding: 0.75rem 1rem; border-radius: 18px; margin-right: 2rem; margin-bottom: 1rem;">
-                        ${isLoading ? '<div class="loading-spinner" style="width: 16px; height: 16px;"></div>' : message}
-                    </div>
-                `;
-            }
-            
-            chatBody.appendChild(messageDiv);
-            chatBody.scrollTop = chatBody.scrollHeight;
+        // THIS IS THE CORRECTED FUNCTION
+function addChatMessage(message, sender, isLoading = false) {
+    const chatBody = document.querySelector('.chat-body');
+    const messageDiv = document.createElement('div');
+    // Added classes for easier styling
+    messageDiv.className = `chat-message d-flex ${sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`;
+
+    const bubble = document.createElement('div');
+    bubble.style.maxWidth = '85%';
+    bubble.style.padding = '0.75rem 1rem';
+    bubble.style.borderRadius = '18px';
+    bubble.style.wordWrap = 'break-word';
+
+    if (sender === 'user') {
+        bubble.style.background = 'var(--cpp-green-primary)';
+        bubble.style.color = 'white';
+        bubble.textContent = message; // Use textContent for user messages for security
+    } else { // 'assistant' or 'bot'
+        bubble.style.background = 'var(--cpp-gray-light)';
+        bubble.style.color = 'var(--cpp-gray-dark)';
+        
+        if (isLoading) {
+            bubble.innerHTML = '<div class="loading-spinner" style="width: 20px; height: 20px;"></div>';
+        } else {
+            // *** THIS IS THE FIX: Use marked.parse() to render Markdown ***
+            bubble.innerHTML = marked.parse(message);
         }
+    }
+
+    messageDiv.appendChild(bubble);
+    chatBody.appendChild(messageDiv);
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
     </script>
 </body>
 </html>

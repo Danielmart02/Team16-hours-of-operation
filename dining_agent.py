@@ -140,7 +140,18 @@ class DiningHallAgent:
 
     def _get_default_system_prompt(self) -> str:
         """Get the default system prompt for the agent."""
-        return (
+        
+        # --- NEW FORMATTING INSTRUCTIONS ---
+        formatting_rules = (
+            "CRITICAL FORMATTING RULES:\n"
+            "1.  Format ALL responses using Markdown.\n"
+            "2.  Use headings (e.g., '## Staffing Summary') for different sections.\n"
+            "3.  Use bold text (e.g., '**Total Hours:**') for key labels and terms.\n"
+            "4.  Use bullet points (`*` or `-`) for lists, breakdowns, or recommendations.\n"
+            "5.  When presenting data for multiple days or comparing items, ALWAYS use a Markdown table."
+        )
+
+        original_prompt = (
             "You are a helpful dining hall staffing assistant. Answer questions as best you can using the provided tools. "
             "Do not make up answers. Think step by step. "
             f"Today's date is {datetime.datetime.now().strftime('%B %d, %Y')}. "
@@ -150,7 +161,9 @@ class DiningHallAgent:
             "You can retrieve current weather data to inform predictions. "
             "Provide clear, actionable insights based on the data and predictions."
         )
-
+        
+        return f"{formatting_rules}\n\n{original_prompt}"
+        
     def set_system_prompt(self, prompt: str):
         """Update the system prompt for the agent."""
         self.system_prompt = prompt

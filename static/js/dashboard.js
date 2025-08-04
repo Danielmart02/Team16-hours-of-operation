@@ -111,8 +111,8 @@ class DiningDashboard {
 
             document.getElementById('workers-needed').textContent = summary.total_workers_needed;
             document.getElementById('people-expected').textContent = summary.people_expected.toLocaleString();
-            document.getElementById('total-hours').textContent = `${summary.total_hours}h`;
-
+            document.getElementById('total-hours').textContent = `${parseFloat(summary.total_hours).toFixed(1)}h`;
+            
             // Show weather note if weather data was used
             const weatherNote = document.getElementById('weather-note');
             if (summary.weather_from_api) {

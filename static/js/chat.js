@@ -312,14 +312,22 @@ class ChatWidget {
         }
     }
 
-    addMessage(text, sender) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}`;
+    // CORRECTED CODE
+addMessage(text, sender) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}`;
+
+    if (sender === 'bot') {
+        // This line converts the AI's Markdown response into proper HTML
+        messageDiv.innerHTML = marked.parse(text);
+    } else {
+        // User messages are kept as plain text for security
         messageDiv.textContent = text;
-        
-        this.chatMessages.appendChild(messageDiv);
-        this.scrollToBottom();
     }
+    
+    this.chatMessages.appendChild(messageDiv);
+    this.scrollToBottom();
+}
 
     addSystemMessage(text) {
         const messageDiv = document.createElement('div');
@@ -401,8 +409,13 @@ class ChatWidget {
 }
 
 // Initialize chat widget when DOM is loaded
+// CORRECTED CODE
 document.addEventListener('DOMContentLoaded', () => {
     window.chatWidget = new ChatWidget();
+    
+    // --- ADD THESE TWO LINES TO START MINIMIZED ---
+    window.chatWidget.openChat();
+    window.chatWidget.minimizeChat();
     
     // Optional: Add keyboard shortcut info to welcome message
     const welcomeMessage = document.querySelector('.message.bot');
